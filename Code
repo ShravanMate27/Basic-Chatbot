@@ -1,0 +1,97 @@
+import speech_recognition as sr
+import pandas as pd
+import numpy as np
+import subprocess
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+
+data = {
+    "feature": [
+        "hello", "hi", "hey", "good morning", "good night",
+        "how are you", "what's up", "how was your day", "how is it going",
+        "what is your name", "who are you", "what can you do",
+        "tell me a joke", "tell me something funny",
+        "what is the weather like", "will it rain today",
+        "open google", "open YouTube,", "play a song", "play music",
+        "i am bored", "i am sad", "i am happy",
+        "thank you", "thanks", "bye", "goodbye" and "see you later."
+    ],
+
+    "target": [
+"Hi there!", "Hello!", "Hey! How can I help?" "Good morning! Hope you have a great day!" "Good night! Sleep well.",
+"I'm good! How about you?", "Not much, just here to chat!", "It was great! How was yours?", "I'm doing well; thanks for asking!",
+"I'm a chatbot, your virtual assistant!" "I'm your chatbot assistant, here to help!", "I can answer questions, chat, and assist you!",
+"Sure! Why don’t skeletons fight each other? Because they don’t have the guts!" "Here's one: Why did the scarecrow win an award? Because he was outstanding in his field!",
+        "I don’t know exactly, but you can check a weather app!", "I'm not sure, check your weather app for an accurate forecast.",
+        "Opening Google...", "Opening YouTube...", "Which song would you like to play?", "Playing your favorite music...",
+"Let's do something fun! How about a joke?""I'm here for you. Want to talk about it?" "That's great! Keep smiling!",
+"You're welcome!" "No problem!" "Goodbye! Have a great day!" "See you! Take care!" "Bye! Hope to chat again soon!"
+    ]
+}
+
+
+df = pd.DataFrame(data)
+X = df["feature"]
+Y = df["target"]
+
+vectorizer = TfidfVectorizer()
+X_vec = vectorizer.fit_transform(X)
+
+
+model = KNeighborsClassifier(n_neighbors=2)
+model.fit(X_vec, Y)
+
+
+def get_response(text):
+    text_vec = vectorizer.transform([text])
+    predicted_ans = model.predict(text_vec)[0]
+    return predicted_ans
+
+
+def open_spotify(music):
+    song_query = music.replace(" ", "%20")
+    spotify_url = f"spotify:search:{song_query}"
+    subprocess.run(["start", spotify_url], shell=True)
+
+
+def recognize_speech_from_microphone():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        
+        recognizer.adjust_for_ambient_noise(source)  
+        audio = recognizer.listen(source)  
+    
+    try:
+        print("Recognizing...")
+        text = recognizer.recognize_google(audio)  
+        print(f"You said: {text}")
+        return text.lower()
+    except sr.UnknownValueError:
+        print("Sorry, I could not understand the audio.")
+        return None
+    except sr.RequestError as e:
+        print(f"Could not request results from Google Speech Recognition service; {e}")
+        return None
+
+
+while True:
+print("Typeprint your message or say something (or type 'exit' to quit):")
+    user_input = recognize_speech_from_microphone()
+
+if not user_input:
+        continue  
+
+If user_input == "bye" or user_input == "exit,"
+        print("Goodbye!")
+        break
+
+elif user_input == "play song" or user_input == "play music":
+        print("Enter the name of the song or say it:")
+        song_name = recognize_speech_from_microphone()
+
+        if song_name:
+            open_spotify(song_name)
+
+    else:
+        response = get_response(user_input)
+        print(response)
